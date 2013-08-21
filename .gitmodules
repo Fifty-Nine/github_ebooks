@@ -1,0 +1,3 @@
+[submodule "githubpy"]
+	path = githubpy
+	url = https://github.com/michaelliao/githubpy.git
