@@ -18,7 +18,7 @@ class SequenceGenerator:
     self.table[tuple(st)].append(None)
 
   def next(self, state):
-    return choice(self.table.get(tuple(state)))
+    return choice(self.table.get(tuple(state), [None]))
 
   def generate(self):
     state = deque([None] * self.order, self.order)
