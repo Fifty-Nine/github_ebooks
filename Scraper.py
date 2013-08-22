@@ -2,16 +2,26 @@
 from github import Github, GithubException
 from random import randint 
 
+def filterCommit(message):
+  message = message.strip()
+  return \
+    len(message) > 0 and \
+    message.find('Initial commit') < 0 and \
+    message.find('Merge pull request') < 0 and \
+    not message.startswith('Signed-off-by') and \
+    message.find('#') < 0
+
 def scrapeRepo(db, repo):
   count = 0
   try:
     for commit in repo.get_commits():
-      v = (commit.sha, commit.commit.message.strip())
-      if v[1] == u'Initial commit':
-        continue
-      print v[1]
-      db.addCommit(*v)
-      count += 1
+      sha = commit.sha
+      message = commit.commit.message.strip()
+      message = ' '.join(filter(filterCommit, message.split('\n')))
+      if len(message) > 0:
+        print message
+        db.addCommit(sha, message)
+        count += 1
   except GithubException as e:
     if e.status != 409 or e.message != u'Git Repository is empty.':
       raise e
