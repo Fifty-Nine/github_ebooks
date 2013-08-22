@@ -68,6 +68,7 @@ def main(argv):
   parser = argparse.ArgumentParser(description='github_ebooks')
   parser.add_argument('--api-key', 
       help='Set the API key used for scraping commits')
+  parser.add_argument('--add-commit')
   parser.add_argument('--commit-file', 
       help='Read commits from the given file and save them in the database')
   parser.add_argument('--print-api-key', action='store_true')
@@ -83,6 +84,9 @@ def main(argv):
 
   if args.api_key is not None:
     db.setConfigValue('api_key', args.api_key)
+
+  if args.add_commit is not None:
+    db.addCommit(hash(args.add_commit), args.add_commit)
 
   if args.commit_file is not None:
     readFromFile(args.commit_file, db)
