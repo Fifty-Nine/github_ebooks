@@ -8,6 +8,7 @@ import string
 from Database import Database
 from Markov import SequenceGenerator
 from Scraper import Scraper
+from Tweeter import Tweeter
 
 whitespace_re = re.compile(r'\s', re.UNICODE)
 punct_re = re.compile(r'(.+)([\?\.!;])+', re.UNICODE)
@@ -61,11 +62,7 @@ def generate(db):
   for commit in db.allCommits():
     sg.addSamples(tokenify(commit[1]))
 
-  print ' '.join(fixup(list(sg.generate())))
-
-def maybeSaveValue(db, key, value):
-  if value is not None:
-    db.setConfigValue(key, value)
+  return u' '.join(fixup(list(sg.generate())))
 
 def main(argv):
   parser = argparse.ArgumentParser(description='github_ebooks')
@@ -87,15 +84,34 @@ def main(argv):
   parser.add_argument('--scrape-search')
   parser.add_argument('--scrape-repo')
   parser.add_argument('--scrape-user')
+  parser.add_argument('--tweet', action='store_true')
   args = parser.parse_args(argv[1:])
 
   db = Database()
+  t = Tweeter(db)
 
-  maybeSaveValue(db, 'api_key', args.api_key)
-  maybeSaveValue(db, 'twitter_access_token_key', args.twitter_access_token_key)
-  maybeSaveValue(db, 'twitter_access_token_secret', args.twitter_access_token_secret)
-  maybeSaveValue(db, 'twitter_consumer_key', args.twitter_consumer_key)
-  maybeSaveValue(db, 'twitter_consumer_secret', args.twitter_consumer_secret)
+  if args.api_key is not None:
+    db.saveConfigValue('api_key', args.api_key)
+
+  twitter_keys_changed = False
+  if args.twitter_access_token_key is not None:
+    t.access_key = args.twitter_access_token_key
+    twitter_keys_changed = True
+  
+  if args.twitter_access_token_secret is not None:
+    t.access_secret = args.twitter_access_token_secret
+    twitter_keys_changed = True
+
+  if args.twitter_consumer_key is not None:
+    t.consumer_key = args.twitter_consumer_key
+    twitter_keys_changed = True
+
+  if args.twitter_consumer_secret is not None:
+    t.consumer_secret = args.twitter_consumer_secret
+    twitter_keys_changed = True
+
+  if twitter_keys_changed:
+    t.saveKeys()
 
   if args.add_commit is not None:
     db.addCommit(hash(args.add_commit), args.add_commit)
@@ -105,10 +121,10 @@ def main(argv):
 
   if args.show_keys:
     print 'GitHub: ' + db.getConfigValue('api_key', default='')
-    print 'Twitter Consumer Key: ' + db.getConfigValue('twitter_consumer_key', default='')
-    print 'Twitter Consumer Secret: ' + db.getConfigValue('twitter_consumer_secret', default='')
-    print 'Twitter Access Token Key: ' + db.getConfigValue('twitter_access_token_key', default='')
-    print 'Twitter Access Token Secret: ' + db.getConfigValue('twitter_access_token_secret', default='')
+    print 'Twitter Consumer Key: ' + t.consumer_key
+    print 'Twitter Consumer Secret: ' + t.consumer_secret
+    print 'Twitter Access Token Key: ' + t.access_key
+    print 'Twitter Access Token Secret: ' + t.access_secret
 
   if args.print_commits:
     printCommits(db.allCommits())
@@ -117,7 +133,10 @@ def main(argv):
     printCommits(db.searchCommits(args.search_commits))
 
   if args.generate:
-    generate(db)
+    print generate(db)
+
+  if args.tweet:
+    t.tweet(generate(db))
   
   if args.reset_commits:
     db.resetCommits()
@@ -134,7 +153,6 @@ def main(argv):
 
   if args.scrape_repo is not None:
     sc.scrapeRepo(args.scrape_repo)
-
 
   return 0
 
