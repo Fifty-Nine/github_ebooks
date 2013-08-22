@@ -32,14 +32,15 @@ def tokenify(paragraph):
   line = []
 
   for word in words:
-    print word
     match = punct_re.match(word)
     word = word.strip(string.punctuation)
     line.append(word)
 
+    if word.istitle():
+      word = word.lower()
+
     if match:
       result.append(line)
-      print line
       line = []
   
   if len(line) > 0:
@@ -47,12 +48,18 @@ def tokenify(paragraph):
 
   return result
 
+def fixup(sequence):
+  if len(sequence) > 0 and not sequence[0].isupper():
+    sequence[0] = sequence[0].capitalize()
+
+  return sequence
+
 def generate(db):
   sg = SequenceGenerator(1)
   for commit in db.allCommits():
     sg.addSamples(tokenify(commit[1]))
 
-  print ' '.join(sg.generate())
+  print ' '.join(fixup(list(sg.generate())))
 
 
 def main(argv):
