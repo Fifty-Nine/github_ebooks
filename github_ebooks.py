@@ -33,8 +33,10 @@ def tokenify(paragraph):
 
   for word in words:
     match = punct_re.match(word)
-    word = word.strip(string.punctuation)
-    line.append(word)
+    word = word.strip(string.punctuation + string.whitespace)
+
+    if len(word) > 0:
+      line.append(word)
 
     if word.istitle():
       word = word.lower()
