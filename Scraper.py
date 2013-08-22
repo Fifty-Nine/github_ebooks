@@ -2,48 +2,58 @@
 from github import Github, GithubException
 from random import randint 
 
-def filterCommit(message):
-  message = message.strip()
-  return \
-    len(message) > 0 and \
-    message.find('Initial commit') < 0 and \
-    message.find('Merge pull request') < 0 and \
-    not message.startswith('Signed-off-by') and \
-    message.find('#') < 0
+class Scraper:
+  def __init__(self, db):
+    self.db = db
 
-def scrapeRepo(db, repo):
-  count = 0
-  try:
-    for commit in repo.get_commits():
-      sha = commit.sha
-      message = commit.commit.message.strip()
-      message = ' '.join(filter(filterCommit, message.split('\n')))
-      if len(message) > 0:
-        print message
-        db.addCommit(sha, message)
-        count += 1
-  except GithubException as e:
-    if e.status != 409 or e.message != u'Git Repository is empty.':
-      raise e
+    api_key = db.getConfigValue('api_key')
+    self.gh = Github(api_key)
+    self.gh.per_page = 10
 
-  return count
-    
-def scrapeUser(db, user):
-  count = 0
-  for repo in user.get_repos():
-    count += scrapeRepo(db, repo)
+  def _filterCommit(self, message):
+    message = message.strip()
+    return \
+      len(message) > 0 and \
+      message.find('Initial commit') < 0 and \
+      message.find('Merge pull request') < 0 and \
+      not message.startswith('Signed-off-by') and \
+      message.find('#') < 0
 
-  return count
+  def scrapeRepo(self, repo_name):
+    return self._scrapeRepo(self.gh.get_repo(repo_name))
 
-def scrape(db, search):
-  gh = Github(db.getConfigValue('api_key'))
-  gh.per_page = 10
-  
-  repos = gh.legacy_search_repos(keyword=search)
+  def _scrapeRepo(self, repo):
+    count = 0
+    try:
+      for commit in repo.get_commits():
+        sha = commit.sha
+        message = commit.commit.message.strip()
+        message = ' '.join(filter(self._filterCommit, message.split('\n')))
+        if len(message) > 0:
+          print message
+          self.db.addCommit(sha, message)
+          count += 1
+    except GithubException as e:
+      if e.status != 409 or e.message != u'Git Repository is empty.':
+        raise e
 
-  count = 0
-  for repo in repos:
-    count += scrapeRepo(db, repo)
+    return count
 
-  return count
+  def scrapeUser(self, user_name):
+    return self._scrapeUser(self.gh.get_user(user_name))
+
+  def _scrapeUser(self, user):
+    count = 0
+    for repo in user.get_repos():
+      count += self._scrapeRepo(repo)
+
+    return count
+
+  def scrape(self, search):
+    repos = self.gh.legacy_search_repos(keyword=search)
+    count = 0
+    for repo in repos:
+      count += self._scrapeRepo(repo)
+
+    return count
 

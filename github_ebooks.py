@@ -7,7 +7,7 @@ import string
 
 from Database import Database
 from Markov import SequenceGenerator
-from Scraper import scrape
+from Scraper import Scraper
 
 whitespace_re = re.compile(r'\s', re.UNICODE)
 punct_re = re.compile(r'(.+)([\?\.!;])+', re.UNICODE)
@@ -73,6 +73,8 @@ def main(argv):
   parser.add_argument('--reset-commits', action='store_true')
   parser.add_argument('--generate', action='store_true')
   parser.add_argument('--scrape')
+  parser.add_argument('--scrape-repo')
+  parser.add_argument('--scrape-user')
   args = parser.parse_args(argv[1:])
 
   db = Database()
@@ -95,8 +97,16 @@ def main(argv):
   if args.reset_commits:
     db.resetCommits()
 
+  sc = Scraper(db)
   if args.scrape is not None:
-    scrape(db, args.scrape)
+    sc.scrape(args.scrape)
+
+  if args.scrape_user is not None:
+    sc.scrapeUser(args.scrape_user)
+
+  if args.scrape_repo is not None:
+    sc.scrapeRepo(args.scrape_repo)
+
 
   return 0
 
