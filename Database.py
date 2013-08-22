@@ -47,6 +47,12 @@ class Database:
     self.c.execute('SELECT Hash, Description FROM Commits')
     return self.c.fetchall()
 
+  def searchCommits(self, search):
+    self.c.execute("""
+      SELECT Hash, Description FROM Commits 
+      WHERE Description LIKE ?""", ('%' + search + '%',))
+    return self.c.fetchall()
+
   def resetCommits(self):
     self.c.execute('DELETE FROM Commits')
     self.conn.commit()

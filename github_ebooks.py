@@ -22,8 +22,8 @@ def readFromFile(path, db):
 
   db.addCommits(commits)
 
-def printCommits(db):
-  for (hash, msg) in db.allCommits():
+def printCommits(commits):
+  for (hash, msg) in commits:
     print msg.encode('utf-8')
 
 def tokenify(paragraph):
@@ -73,6 +73,7 @@ def main(argv):
       help='Read commits from the given file and save them in the database')
   parser.add_argument('--print-api-key', action='store_true')
   parser.add_argument('--print-commits', action='store_true')
+  parser.add_argument('--search-commits')
   parser.add_argument('--reset-commits', action='store_true')
   parser.add_argument('--generate', action='store_true')
   parser.add_argument('--scrape-search')
@@ -95,7 +96,10 @@ def main(argv):
     print db.getConfigValue('api_key')
 
   if args.print_commits:
-    printCommits(db)
+    printCommits(db.allCommits())
+
+  if args.search_commits is not None:
+    printCommits(db.searchCommits(args.search_commits))
 
   if args.generate:
     generate(db)
