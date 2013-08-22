@@ -5,10 +5,7 @@ import codecs
 import re
 import string
 
-from Database import Database
-from Markov import SequenceGenerator
-from Scraper import Scraper
-from Tweeter import Tweeter
+from github_ebooks import Database, SequenceGenerator, Scraper, Tweeter
 
 whitespace_re = re.compile(r'\s', re.UNICODE)
 punct_re = re.compile(r'(.+)([\?\.!;])+', re.UNICODE)
