@@ -1,6 +1,8 @@
 
 from github import Github, GithubException
-from random import randint 
+import re
+
+tag_mutex = re.compile(r'^([\w\- ]+):(.*)$', re.UNICODE)
 
 class Scraper:
   def __init__(self, db):
@@ -15,8 +17,8 @@ class Scraper:
     return \
       len(message) > 0 and \
       message.find('Initial commit') < 0 and \
-      message.find('Merge pull request') < 0 and \
-      not message.startswith('Signed-off-by') and \
+      not message.startswith('Merge') and \
+      not tag_mutex.match(message) and \
       message.find('#') < 0
 
   def scrapeRepo(self, repo_name):
