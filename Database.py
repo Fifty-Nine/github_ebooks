@@ -1,8 +1,8 @@
 import sqlite3
 
 class Database:
-  def __init__(self):
-    self.conn = sqlite3.connect('github_ebooks.db')
+  def __init__(self, path='github_ebooks.db'):
+    self.conn = sqlite3.connect(path)
     self.c = self.conn.cursor()
     self.evolve()
 

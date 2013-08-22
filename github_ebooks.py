@@ -66,6 +66,7 @@ def generate(db):
 
 def main(argv):
   parser = argparse.ArgumentParser(description='github_ebooks')
+  parser.add_argument('--db', default='github_ebooks.db')
   parser.add_argument('--api-key', 
       help='Set the API key used for scraping commits')
   parser.add_argument('--add-commit')
@@ -87,7 +88,7 @@ def main(argv):
   parser.add_argument('--tweet', action='store_true')
   args = parser.parse_args(argv[1:])
 
-  db = Database()
+  db = Database(path=args.db)
   t = Tweeter(db)
 
   if args.api_key is not None:
