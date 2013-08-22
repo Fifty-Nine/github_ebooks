@@ -29,11 +29,11 @@ class Database:
     self.c.execute('REPLACE INTO Config (Key, Value) VALUES(?, ?)', (key, value))
     self.conn.commit()
 
-  def getConfigValue(self, key, parser=str):
+  def getConfigValue(self, key, parser=str, default=None):
     c = self.conn.cursor()
     self.c.execute('SELECT Value FROM Config WHERE Key=?', (key,))
     r = self.c.fetchone()
-    return parser(r[0]) if r is not None else None
+    return parser(r[0]) if r is not None else default
 
   def addCommits(self, commits):
     self.c.executemany('REPLACE INTO Commits VALUES(?, ?)', commits)

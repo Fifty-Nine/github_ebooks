@@ -63,6 +63,9 @@ def generate(db):
 
   print ' '.join(fixup(list(sg.generate())))
 
+def maybeSaveValue(db, key, value):
+  if value is not None:
+    db.setConfigValue(key, value)
 
 def main(argv):
   parser = argparse.ArgumentParser(description='github_ebooks')
@@ -71,7 +74,11 @@ def main(argv):
   parser.add_argument('--add-commit')
   parser.add_argument('--commit-file', 
       help='Read commits from the given file and save them in the database')
-  parser.add_argument('--print-api-key', action='store_true')
+  parser.add_argument('--show-keys', action='store_true')
+  parser.add_argument('--twitter-consumer-key')
+  parser.add_argument('--twitter-consumer-secret')
+  parser.add_argument('--twitter-access-token-key')
+  parser.add_argument('--twitter-access-token-secret')
   parser.add_argument('--print-commits', action='store_true')
   parser.add_argument('--search-commits')
   parser.add_argument('--reset-commits', action='store_true')
@@ -84,8 +91,11 @@ def main(argv):
 
   db = Database()
 
-  if args.api_key is not None:
-    db.setConfigValue('api_key', args.api_key)
+  maybeSaveValue(db, 'api_key', args.api_key)
+  maybeSaveValue(db, 'twitter_access_token_key', args.twitter_access_token_key)
+  maybeSaveValue(db, 'twitter_access_token_secret', args.twitter_access_token_secret)
+  maybeSaveValue(db, 'twitter_consumer_key', args.twitter_consumer_key)
+  maybeSaveValue(db, 'twitter_consumer_secret', args.twitter_consumer_secret)
 
   if args.add_commit is not None:
     db.addCommit(hash(args.add_commit), args.add_commit)
@@ -93,8 +103,12 @@ def main(argv):
   if args.commit_file is not None:
     readFromFile(args.commit_file, db)
 
-  if args.print_api_key:
-    print db.getConfigValue('api_key')
+  if args.show_keys:
+    print 'GitHub: ' + db.getConfigValue('api_key', default='')
+    print 'Twitter Consumer Key: ' + db.getConfigValue('twitter_consumer_key', default='')
+    print 'Twitter Consumer Secret: ' + db.getConfigValue('twitter_consumer_secret', default='')
+    print 'Twitter Access Token Key: ' + db.getConfigValue('twitter_access_token_key', default='')
+    print 'Twitter Access Token Secret: ' + db.getConfigValue('twitter_access_token_secret', default='')
 
   if args.print_commits:
     printCommits(db.allCommits())
