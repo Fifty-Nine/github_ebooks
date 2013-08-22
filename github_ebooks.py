@@ -75,6 +75,7 @@ def main(argv):
   parser.add_argument('--print-commits', action='store_true')
   parser.add_argument('--search-commits')
   parser.add_argument('--reset-commits', action='store_true')
+  parser.add_argument('--drop-commits')
   parser.add_argument('--generate', action='store_true')
   parser.add_argument('--scrape-search')
   parser.add_argument('--scrape-repo')
@@ -106,6 +107,9 @@ def main(argv):
   
   if args.reset_commits:
     db.resetCommits()
+
+  if args.drop_commits is not None:
+    db.dropCommits(args.drop_commits)
 
   sc = Scraper(db)
   if args.scrape_search is not None:

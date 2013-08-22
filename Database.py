@@ -53,6 +53,12 @@ class Database:
       WHERE Description LIKE ?""", ('%' + search + '%',))
     return self.c.fetchall()
 
+  def dropCommits(self, search):
+    self.c.execute("""
+      DELETE FROM Commits
+      WHERE Description LIKE ?""", ('%' + search + '%',))
+    self.conn.commit()
+
   def resetCommits(self):
     self.c.execute('DELETE FROM Commits')
     self.conn.commit()
