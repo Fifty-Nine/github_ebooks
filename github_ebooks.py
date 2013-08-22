@@ -134,7 +134,9 @@ def main(argv):
     print generate(db)
 
   if args.tweet:
-    t.tweet(generate(db))
+    message = generate(db)
+    print message 
+    t.tweet(message)
   
   if args.reset_commits:
     db.resetCommits()
