@@ -27,6 +27,7 @@ class Database:
   def setConfigValue(self, key, value):
     c = self.conn.cursor()
     self.c.execute('REPLACE INTO Config (Key, Value) VALUES(?, ?)', (key, value))
+    self.conn.commit()
 
   def getConfigValue(self, key, parser=str):
     c = self.conn.cursor()
