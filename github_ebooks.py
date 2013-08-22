@@ -24,7 +24,7 @@ def printCommits(db):
 def generate(db):
   sg = SequenceGenerator(1)
   for commit in db.allCommits():
-    sg.addSample(commit[1].split(' '))
+    sg.addSample(commit[1].split(' \n'))
 
   print ' '.join(sg.generate())
 
