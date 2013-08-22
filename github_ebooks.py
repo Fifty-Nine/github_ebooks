@@ -19,7 +19,7 @@ def readFromFile(path, db):
 
 def printCommits(db):
   for (hash, msg) in db.allCommits():
-    print msg
+    print msg.encode('utf-8')
 
 def generate(db):
   sg = SequenceGenerator(1)
@@ -37,6 +37,7 @@ def main(argv):
       help='Read commits from the given file and save them in the database')
   parser.add_argument('--print-api-key', action='store_true')
   parser.add_argument('--print-commits', action='store_true')
+  parser.add_argument('--reset-commits', action='store_true')
   parser.add_argument('--generate', action='store_true')
   parser.add_argument('--scrape')
   args = parser.parse_args(argv[1:])
@@ -57,6 +58,9 @@ def main(argv):
 
   if args.generate:
     generate(db)
+  
+  if args.reset_commits:
+    db.resetCommits()
 
   if args.scrape is not None:
     scrape(db, args.scrape)

@@ -47,3 +47,7 @@ class Database:
     self.c.execute('SELECT Hash, Description FROM Commits')
     return self.c.fetchall()
 
+  def resetCommits(self):
+    self.c.execute('DELETE FROM Commits')
+    self.conn.commit()
+
