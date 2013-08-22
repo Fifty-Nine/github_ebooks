@@ -2,10 +2,15 @@
 import sys
 import argparse
 import codecs
+import re
+import string
 
 from Database import Database
 from Markov import SequenceGenerator
 from Scraper import scrape
+
+whitespace_re = re.compile(r'\s', re.UNICODE)
+punct_re = re.compile(r'(.+)([\?\.!;])+', re.UNICODE)
 
 def readFromFile(path, db):
   f = codecs.open(path, 'r', 'utf-8')
@@ -21,10 +26,31 @@ def printCommits(db):
   for (hash, msg) in db.allCommits():
     print msg.encode('utf-8')
 
+def tokenify(paragraph):
+  words = whitespace_re.split(paragraph)
+  result = []
+  line = []
+
+  for word in words:
+    print word
+    match = punct_re.match(word)
+    word = word.strip(string.punctuation)
+    line.append(word)
+
+    if match:
+      result.append(line)
+      print line
+      line = []
+  
+  if len(line) > 0:
+    result.append(line)
+
+  return result
+
 def generate(db):
   sg = SequenceGenerator(1)
   for commit in db.allCommits():
-    sg.addSample(commit[1].split(' \n'))
+    sg.addSamples(tokenify(commit[1]))
 
   print ' '.join(sg.generate())
 

@@ -16,6 +16,10 @@ class SequenceGenerator:
       len += 1
 
     self.table[tuple(st)].append(None)
+  
+  def addSamples(self, sequences):
+    for sequence in sequences:
+      self.addSample(sequence)
 
   def next(self, state):
     return choice(self.table.get(tuple(state), [None]))
