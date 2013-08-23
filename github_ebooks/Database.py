@@ -2,9 +2,14 @@ import sqlite3
 
 class Database:
   def __init__(self, path='github_ebooks.db'):
-    self.conn = sqlite3.connect(path)
-    self.c = self.conn.cursor()
+    self._conn = sqlite3.connect(path)
     self.evolve()
+
+  def _getCursor(self, cursor=None):
+    return cursor if cursor is not None else self._conn.cursor()
+
+  def _commit(self):
+    self._conn.commit()
 
   def evolve(self):
     needs_evolution = False;
@@ -15,51 +20,72 @@ class Database:
       needs_evolution = True
 
     if needs_evolution:
-      self.c.execute('''CREATE TABLE Config (
+      c = self._getCursor()
+      c.execute('''CREATE TABLE Config (
         Key text NOT NULL PRIMARY KEY,
         Value text)''')
-      self.c.execute('''CREATE TABLE Commits (
+      c.execute('''CREATE TABLE Commits (
         Hash text NOT NULL PRIMARY KEY,
         Description text)''')
-      self.setConfigValue('version', 1)
-      self.conn.commit()
+      self.setConfigValue('version', 1, cursor=c)
+      self._commit()
 
-  def setConfigValue(self, key, value):
-    c = self.conn.cursor()
-    self.c.execute('REPLACE INTO Config (Key, Value) VALUES(?, ?)', (key, value))
-    self.conn.commit()
+  def setConfigValue(self, key, value, cursor=None):
+    c = self._getCursor(cursor)
+    c.execute('REPLACE INTO Config (Key, Value) VALUES(?, ?)', (key, value))
+    if cursor is not None:
+      self._commit()
 
   def getConfigValue(self, key, parser=str, default=None):
-    c = self.conn.cursor()
-    self.c.execute('SELECT Value FROM Config WHERE Key=?', (key,))
-    r = self.c.fetchone()
+    c = self._getCursor()
+    c.execute('SELECT Value FROM Config WHERE Key=?', (key,))
+    r = c.fetchone()
     return parser(r[0]) if r is not None else default
 
   def addCommits(self, commits):
-    self.c.executemany('REPLACE INTO Commits VALUES(?, ?)', commits)
-    self.conn.commit()
+    c = self._getCursor()
+    c.executemany('REPLACE INTO Commits VALUES(?, ?)', commits)
+    self._commit()
 
   def addCommit(self, hash_value, text):
-    self.c.execute('REPLACE INTO Commits VALUES(?, ?)', (hash_value, text))
-    self.conn.commit()
+    c = self._getCursor()
+    c.execute('REPLACE INTO Commits VALUES(?, ?)', (hash_value, text))
+    self._commit()
 
   def allCommits(self):
-    self.c.execute('SELECT Hash, Description FROM Commits')
-    return self.c.fetchall()
+    c = self._getCursor()
+    c.execute('SELECT Hash, Description FROM Commits')
+    return c.fetchall()
 
   def searchCommits(self, search):
-    self.c.execute("""
+    c = self._getCursor()
+    c.execute("""
       SELECT Hash, Description FROM Commits 
       WHERE Description LIKE ?""", ('%' + search + '%',))
-    return self.c.fetchall()
+    return c.fetchall()
 
   def dropCommits(self, search):
-    self.c.execute("""
+    c = self._getCursor()
+    c.execute("""
       DELETE FROM Commits
       WHERE Description LIKE ?""", ('%' + search + '%',))
-    self.conn.commit()
+    self._commit()
 
   def resetCommits(self):
-    self.c.execute('DELETE FROM Commits')
-    self.conn.commit()
+    c = self._getCursor()
+    c.execute('DELETE FROM Commits')
+    self._commit()
+
+  def getConfig(self):
+    c = self._getCursor()
+    c.execute("SELECT Key, Value FROM Config")
+    return dict(c.fetchall())
+
+  def setConfig(self, d):
+    c = self._getCursor()
+    c.executemany("REPLACE INTO Config(Key, Value) VALUES(?, ?)", d.items())
+    self._commit()
+
+
+
 
