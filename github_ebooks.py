@@ -4,11 +4,31 @@ import argparse
 import codecs
 import re
 import string
+from random import choice
 
 from github_ebooks import Database, SequenceGenerator, Scraper, Tweeter
 
-whitespace_re = re.compile(r'\s', re.UNICODE)
-punct_re = re.compile(r'(.+)([\?\.!;])+', re.UNICODE)
+whitespace_re = re.compile(r'\s', re.U)
+punct_re = re.compile(r'(.+)([\?\.!;])+', re.U)
+
+# A list of names. These are based on the most popular baby names in the US
+# in 1987 (best year). There's about an equal number of male/female names, 
+# which is not statistically accurate but I'd like to think these nonsensical
+# commits are from a future where computing has more gender diversity!
+names = [ "Mike", "Jessica", "Chris", "Ashley", "Matt", "Amanda", "Josh",
+          "Jenny", "David", "Sarah", "Andrew", "Steph", "Dan", "Brittany",
+          "Jim", "Nicole", "Justin", "Heather", "Bob", "Liz", "John", "Sam",
+          "Joe", "Meg", "Ryan", "Melissa", "Brandon", "Danny", "Bill", 
+          "Amber", "Nick", "Lauren", "Tony", "Rachel", "Jon", "Tiffany", 
+          "Kevin", "Emily", "Brian", "Tina", "Tim", "Ben" ]
+
+def randomName(word=""):
+  return choice(names)
+
+replacementTable = (
+    ( re.compile(r'@upperName', re.U | re.I), lambda w: randomName().upper() ),
+    ( re.compile(r'@name', re.U | re.I),      randomName                     ) 
+)
 
 def readFromFile(path, db):
   f = codecs.open(path, 'r', 'utf-8')
@@ -31,12 +51,14 @@ def tokenify(paragraph):
 
   for word in words:
     match = punct_re.match(word)
-    word = word.strip(string.punctuation + string.whitespace)
+    word = word.strip()
+    strip = word.rstrip if word.startswith('@') else word.strip
+    word = strip(string.punctuation)
 
     if len(word) > 0:
       line.append(word)
 
-    if word.istitle():
+    if word.istitle(): 
       word = word.lower()
 
     if match:
@@ -52,14 +74,19 @@ def fixup(sequence):
   if len(sequence) > 0 and not sequence[0].isupper():
     sequence[0] = sequence[0].capitalize()
 
-  return sequence
+  result = u' '.join(sequence)
+
+  for (regex, subst) in replacementTable:
+    result = regex.sub(lambda match: subst(match.group(0)), result)
+
+  return result
 
 def generate(db):
   sg = SequenceGenerator(1)
   for commit in db.allCommits():
     sg.addSamples(tokenify(commit[1]))
 
-  return u' '.join(fixup(list(sg.generate())))
+  return fixup(list(sg.generate()))
 
 def main(argv):
   parser = argparse.ArgumentParser(description='github_ebooks')
