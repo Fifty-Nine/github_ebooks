@@ -70,6 +70,19 @@ class Database:
       WHERE Description REGEXP ?""", (search,))
     return c.fetchall()
 
+  def subCommits(self, find, replace):
+    c = self._getCursor()
+    c.execute("""
+      SELECT Hash, Description FROM Commits
+      WHERE Description REGEXP ?""", (find,))
+
+    commits = []
+    for (h, d) in c.fetchall():
+      commits.append((h, re.sub(find, replace, d, re.U)))
+
+    self.addCommits(commits)
+    return commits
+
   def dropCommits(self, search):
     c = self._getCursor()
     c.execute("""

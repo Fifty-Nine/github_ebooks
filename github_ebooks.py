@@ -4,7 +4,7 @@ import argparse
 import codecs
 import re
 import string
-from random import choice
+from random import choice, randint, paretovariate
 
 from github_ebooks import Database, SequenceGenerator, Scraper, Tweeter
 
@@ -25,9 +25,15 @@ names = [ "Mike", "Jessica", "Chris", "Ashley", "Matt", "Amanda", "Josh",
 def randomName(word=""):
   return choice(names)
 
+def randomVersion(word=""):
+  source = range(randint(2, 4))
+  rand = lambda i: randint(0, (i + 1) * 4)
+  return '.'.join([str(rand(i)) for i in source])
+
 replacementTable = (
     ( re.compile(r'@upperName', re.U | re.I), lambda w: randomName().upper() ),
-    ( re.compile(r'@name', re.U | re.I),      randomName                     ) 
+    ( re.compile(r'@name', re.U | re.I),      randomName                     ),
+    ( re.compile(r'@version', re.U | re.I),   randomVersion                  )
 )
 
 def readFromFile(path, db):
@@ -102,7 +108,8 @@ def main(argv):
   parser.add_argument('--twitter-access-token-key')
   parser.add_argument('--twitter-access-token-secret')
   parser.add_argument('--print-commits', action='store_true')
-  parser.add_argument('--search-commits')
+  parser.add_argument('--find')
+  parser.add_argument('--replace')
   parser.add_argument('--reset-commits', action='store_true')
   parser.add_argument('--drop-commits')
   parser.add_argument('--generate', action='store_true')
@@ -115,33 +122,33 @@ def main(argv):
   db = Database(path=args.db)
   t = Tweeter(db)
 
-  if args.api_key is not None:
+  if args.api_key:
     db.saveConfigValue('api_key', args.api_key)
 
   twitter_keys_changed = False
-  if args.twitter_access_token_key is not None:
+  if args.twitter_access_token_key:
     t.access_key = args.twitter_access_token_key
     twitter_keys_changed = True
   
-  if args.twitter_access_token_secret is not None:
+  if args.twitter_access_token_secret:
     t.access_secret = args.twitter_access_token_secret
     twitter_keys_changed = True
 
-  if args.twitter_consumer_key is not None:
+  if args.twitter_consumer_key:
     t.consumer_key = args.twitter_consumer_key
     twitter_keys_changed = True
 
-  if args.twitter_consumer_secret is not None:
+  if args.twitter_consumer_secret:
     t.consumer_secret = args.twitter_consumer_secret
     twitter_keys_changed = True
 
   if twitter_keys_changed:
     t.saveKeys()
 
-  if args.add_commit is not None:
+  if args.add_commit:
     db.addCommit(hash(args.add_commit), args.add_commit)
 
-  if args.commit_file is not None:
+  if args.commit_file:
     readFromFile(args.commit_file, db)
 
   if args.show_keys:
@@ -153,9 +160,13 @@ def main(argv):
 
   if args.print_commits:
     printCommits(db.allCommits())
-
-  if args.search_commits is not None:
-    printCommits(db.searchCommits(args.search_commits))
+  
+  if not args.find and args.replace:
+    pass
+  elif args.find and args.replace:
+    printCommits(db.subCommits(args.find, args.replace))
+  elif args.find:
+    printCommits(db.searchCommits(args.find))
 
   if args.generate:
     print generate(db)
@@ -168,17 +179,17 @@ def main(argv):
   if args.reset_commits:
     db.resetCommits()
 
-  if args.drop_commits is not None:
+  if args.drop_commits:
     db.dropCommits(args.drop_commits)
 
   sc = Scraper(db)
-  if args.scrape_search is not None:
+  if args.scrape_search:
     sc.scrape(args.scrape_search)
 
-  if args.scrape_user is not None:
+  if args.scrape_user:
     sc.scrapeUser(args.scrape_user)
 
-  if args.scrape_repo is not None:
+  if args.scrape_repo:
     sc.scrapeRepo(args.scrape_repo)
 
   return 0
