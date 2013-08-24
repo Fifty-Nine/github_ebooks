@@ -1,9 +1,14 @@
 import sqlite3
+import re
 
 class Database:
   def __init__(self, path='github_ebooks.db'):
     self._conn = sqlite3.connect(path)
     self.evolve()
+
+  @staticmethod
+  def _regexp(pattern, data):
+    return re.search(pattern, data, re.U) is not None
 
   def _getCursor(self, cursor=None):
     return cursor if cursor is not None else self._conn.cursor()
@@ -19,6 +24,7 @@ class Database:
     except sqlite3.OperationalError:
       needs_evolution = True
 
+    self._conn.create_function('regexp', 2, Database._regexp)
     if needs_evolution:
       c = self._getCursor()
       c.execute('''CREATE TABLE Config (
@@ -61,14 +67,14 @@ class Database:
     c = self._getCursor()
     c.execute("""
       SELECT Hash, Description FROM Commits 
-      WHERE Description LIKE ?""", ('%' + search + '%',))
+      WHERE Description REGEXP ?""", (search,))
     return c.fetchall()
 
   def dropCommits(self, search):
     c = self._getCursor()
     c.execute("""
       DELETE FROM Commits
-      WHERE Description LIKE ?""", ('%' + search + '%',))
+      WHERE Description REGEXP ?""", (search,))
     self._commit()
 
   def resetCommits(self):
