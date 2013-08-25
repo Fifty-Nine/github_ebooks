@@ -24,8 +24,10 @@ class SequenceGenerator:
   def next(self, state):
     return choice(self.table.get(tuple(state), [None]))
 
-  def generate(self):
-    state = deque([None] * self.order, self.order)
+  def generate(self, seed=[]):
+    left = [None] * max(0, self.order - len(seed))
+    right = seed[-self.order:]
+    state = deque(left + right, self.order)
 
     while True:
       nt = self.next(state)

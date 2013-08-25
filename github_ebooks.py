@@ -5,6 +5,7 @@ import codecs
 import re
 import string
 from random import choice, randint, paretovariate
+from itertools import chain
 
 from github_ebooks import Database, SequenceGenerator, Scraper, Tweeter
 
@@ -87,12 +88,15 @@ def fixup(sequence):
 
   return result
 
-def generate(db):
+def generate(db, seed=""):
   sg = SequenceGenerator(1)
   for commit in db.allCommits():
     sg.addSamples(tokenify(commit[1]))
 
-  return fixup(list(sg.generate()))
+  left = list(chain(*tokenify(seed)))
+  right = list(sg.generate(left))
+  
+  return fixup(list(chain(left, right)))
 
 def main(argv):
   parser = argparse.ArgumentParser(description='github_ebooks')
@@ -113,6 +117,7 @@ def main(argv):
   parser.add_argument('--reset-commits', action='store_true')
   parser.add_argument('--drop-commits')
   parser.add_argument('--generate', action='store_true')
+  parser.add_argument('--seed')
   parser.add_argument('--scrape-search')
   parser.add_argument('--scrape-repo')
   parser.add_argument('--scrape-user')
@@ -170,6 +175,9 @@ def main(argv):
 
   if args.generate:
     print generate(db)
+
+  if args.seed:
+    print generate(db, args.seed)
 
   if args.tweet:
     message = generate(db)
