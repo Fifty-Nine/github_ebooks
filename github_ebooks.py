@@ -94,9 +94,14 @@ def generate(db, seed=""):
     sg.addSamples(tokenify(commit[1]))
 
   left = list(chain(*tokenify(seed)))
-  right = list(sg.generate(left))
-  
-  return fixup(list(chain(left, right)))
+
+  while True:
+    right = list(sg.generate(left))
+
+    words = list(chain(left, right))
+    result = fixup(words)
+    if len(words) >= 3 and len(result) <= 140:
+      return result
 
 def main(argv):
   parser = argparse.ArgumentParser(description='github_ebooks')
